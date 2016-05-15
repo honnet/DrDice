@@ -19,28 +19,52 @@ at this FS setting, so the value of -1009 corresponds to -1009 * 1 =
 1009 mg = 1.009 g.
 */
 
-#include <Wire.h>
 #include <LSM303.h>
 
-LSM303 imu;
+//#define DEBUG_PRINT
 
+LSM303 imu;
 char report[40];
 
 void setup()
 {
-  Serial.begin(115200);
-  Wire.begin();
-  imu.init();
-  imu.enableDefault();
+    Serial.begin(115200);
+    imu.init();
+    imu.enableDefault();
 }
 
 void loop()
 {
-  imu.readAcc();
+    static int oldFace = 0;
 
-  snprintf(report, sizeof(report), "32000 -32000 %d %d %d", imu.a.x, imu.a.y, imu.a.z);
-  Serial.println(report);
+    imu.readAcc();
+    int face = getFace();
 
-  delay(5);
+    if (oldFace != face)
+        Serial.println(face);
+    oldFace = face;
+
+    delay(60);
+}
+
+int getFace() {
+    const int threshold = (1 << 12) * 95 / 100; // percentage of max val (=2**12)
+
+#ifdef DEBUG_PRINT
+    snprintf(report, sizeof(report), "32000 -32000 %d %d %d", imu.a.x, imu.a.y, imu.a.z);
+    Serial.println(report);
+#endif
+
+    // TODO: array with x, y, z
+    // TODO: test vector norm before
+    // TODO: compute dot product with unitary vectors then check sign
+    if (imu.a.x >  threshold) return 1;
+    if (imu.a.x < -threshold) return 2;
+    if (imu.a.y >  threshold) return 3;
+    if (imu.a.y < -threshold) return 4;
+    if (imu.a.z >  threshold) return 5;
+    if (imu.a.z < -threshold) return 6;
+
+    return 0; // not stopped on a face
 }
 
