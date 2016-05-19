@@ -21,10 +21,12 @@ at this FS setting, so the value of -1009 corresponds to -1009 * 1 =
 
 #include <LSM303.h>
 
-//#define DEBUG_PRINT
+#define DEBUG_PRINT
 
 LSM303 imu;
 char report[40];
+int face = 0;
+int oldFace = 0;
 
 void setup()
 {
@@ -35,23 +37,27 @@ void setup()
 
 void loop()
 {
-    static int oldFace = 0;
-
     imu.readAcc();
-    int face = getFace();
+    face = getFace();
 
-    if (oldFace != face)
+    if (face && oldFace != face) {
+#ifndef DEBUG_PRINT
         Serial.println(face);
-    oldFace = face;
+#endif
+        oldFace = face;
+        delay(100);
+    }
 
-    delay(60);
+    delay(100);
 }
 
 int getFace() {
     const int threshold = (1 << 14) * 95 / 100; // percentage of max val (=2**12)
 
 #ifdef DEBUG_PRINT
-    snprintf(report, sizeof(report), "32000 -32000 %d %d %d", imu.a.x, imu.a.y, imu.a.z);
+    snprintf(report, sizeof(report), "%d %d %d %d %d %d",
+             threshold, -threshold, imu.a.x, imu.a.y, imu.a.z,
+             face ? face*32000/6 : oldFace*32000/6);
     Serial.println(report);
 #endif
 
