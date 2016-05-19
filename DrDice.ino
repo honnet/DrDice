@@ -52,7 +52,7 @@ void loop()
 }
 
 int getFace() {
-    const int threshold = (1 << 14) * 95 / 100; // percentage of max val (=2**12)
+    const int threshold = (1 << 14) * 85 / 100; // percentage of max val (=2**12)
 
 #ifdef DEBUG_PRINT
     snprintf(report, sizeof(report), "%d %d %d %d %d %d",
