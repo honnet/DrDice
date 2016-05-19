@@ -64,12 +64,12 @@ int getFace() {
     // TODO: array with x, y, z
     // TODO: test vector norm before
     // TODO: compute dot product with unitary vectors then check sign
-    if (imu.a.x >  threshold) return 1;
-    if (imu.a.x < -threshold) return 2;
-    if (imu.a.y >  threshold) return 3;
-    if (imu.a.y < -threshold) return 4;
-    if (imu.a.z >  threshold) return 5;
-    if (imu.a.z < -threshold) return 6;
+    if      (imu.a.x >  threshold) return 1;
+    else if (imu.a.x < -threshold) return 2;
+    else if (imu.a.y >  threshold) return 3;
+    else if (imu.a.y < -threshold) return 4;
+    else if (imu.a.z >  threshold) return 5;
+    else if (imu.a.z < -threshold) return 6;
 
     return 0; // not stopped on a face
 }
