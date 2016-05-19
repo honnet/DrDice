@@ -21,7 +21,7 @@ at this FS setting, so the value of -1009 corresponds to -1009 * 1 =
 
 #include <LSM303.h>
 
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 LSM303 imu;
 char report[40];
@@ -37,17 +37,29 @@ void setup()
 
 void loop()
 {
+    static int cnt = 0;
     imu.readAcc();
     face = getFace();
 
-    if (face && oldFace != face) {
-#ifndef DEBUG_PRINT
-        Serial.println(face);
-#endif
-        oldFace = face;
-        delay(100);
+    Serial.println(face);
+
+    if (face && oldFace == face) {
+
+        Serial.print("cnt = ");
+        Serial.println(cnt);
+
+        // count how long we've been on the same face:
+        if (cnt++ == 3) {
+            // play(face);
+            Serial.print("    >>> PLAY ");
+            Serial.println(face);
+        }
+
+    } else {
+        cnt = 0;
     }
 
+    oldFace = face;
     delay(100);
 }
 
@@ -61,9 +73,6 @@ int getFace() {
     Serial.println(report);
 #endif
 
-    // TODO: array with x, y, z
-    // TODO: test vector norm before
-    // TODO: compute dot product with unitary vectors then check sign
     if      (imu.a.x >  threshold) return 1;
     else if (imu.a.x < -threshold) return 2;
     else if (imu.a.y >  threshold) return 3;
