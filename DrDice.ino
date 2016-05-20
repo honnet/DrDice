@@ -19,7 +19,7 @@ at this FS setting, so the value of -1009 corresponds to -1009 * 1 =
 1009 mg = 1.009 g.
 */
 
-#include <LSM303.h>
+#include "LSM303.h"
 
 //#define DEBUG_PRINT
 
@@ -41,13 +41,7 @@ void loop()
     imu.readAcc();
     face = getFace();
 
-    Serial.println(face);
-
     if (face && oldFace == face) {
-
-        Serial.print("cnt = ");
-        Serial.println(cnt);
-
         // count how long we've been on the same face:
         if (cnt++ == 3) {
             // play(face);
