@@ -20,6 +20,31 @@ at this FS setting, so the value of -1009 corresponds to -1009 * 1 =
 */
 
 #include "LSM303.h"
+#include "Adafruit_Soundboard.h"
+//#include <SoftwareSerial.h>
+
+// Choose any two pins that can be used with SoftwareSerial to RX & TX
+#define SFX_RX 0
+#define SFX_TX 1
+#define SFX_UG 2 // fake GND used for UG pin
+
+// Connect to the RST pin on the Sound Board
+#define SFX_RST 3
+#define SFX_VCC 16 // fake VCC
+#define SFX_GND 17 // fake GND
+
+// we'll be using software serial
+//SoftwareSerial ss = SoftwareSerial(SFX_TX, SFX_RX);
+
+// pass the software serial to Adafruit_soundboard, the second
+// argument is the debug port (not used really) and the third
+// arg is the reset pin
+// Adafruit_Soundboard sfx = Adafruit_Soundboard(&ss, NULL, SFX_RST);
+// can also try hardware serial with
+Adafruit_Soundboard sfx = Adafruit_Soundboard(&Serial1, NULL, SFX_RST);
+
+// You can also monitor the ACT pin for when audio is playing!
+
 
 //#define DEBUG_PRINT
 
@@ -30,13 +55,38 @@ int oldFace = 0;
 
 void setup()
 {
+    pinMode(SFX_VCC, OUTPUT);
+    digitalWrite(SFX_VCC, HIGH); // fake VCC
+
+    pinMode(SFX_GND, OUTPUT);
+    digitalWrite(SFX_GND, LOW); // fake GND
+
+    pinMode(SFX_UG, OUTPUT);
+    digitalWrite(SFX_UG, LOW); // fake GND
+
+    pinMode(13, OUTPUT); // LED
     Serial.begin(115200);
+    Serial.println("Starting...");
+
+    Serial1.begin(9600);
+    while (!sfx.reset()) {
+        Serial.println("SFX board not found");
+        delay(100);
+    }
+
+    Serial.println("SFX board found");
+    if (! sfx.playTrack(face) ) {
+        Serial.println("Failed to play track?");
+    }
+
     imu.init();
     imu.enableDefault();
 }
 
 void loop()
 {
+    flushInput();
+
     static int cnt = 0;
     imu.readAcc();
     face = getFace();
@@ -47,13 +97,17 @@ void loop()
             // play(face);
             Serial.print("    >>> PLAY ");
             Serial.println(face);
-        }
 
+            if (! sfx.playTrack(face) ) {
+                Serial.println("Failed to play track?");
+            }
+        }
     } else {
         cnt = 0;
     }
 
     oldFace = face;
+    digitalWrite(13, !digitalRead(13));
     delay(100);
 }
 
@@ -75,5 +129,17 @@ int getFace() {
     else if (imu.a.z < -threshold) return 6;
 
     return 0; // not stopped on a face
+}
+
+void flushInput() {
+    // Read all available serial input to flush pending data.
+    uint16_t timeoutloop = 0;
+    while (timeoutloop++ < 40) {
+        while(Serial1.available()) {
+            Serial1.read();
+            timeoutloop = 0;  // If char was received reset the timer
+        }
+        delay(1);
+    }
 }
 
